@@ -1,0 +1,524 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>WeatherAPP-Example</title>
+	
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="index, all" />
+    
+    	<link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+	<script src="lib/leaflet/leaflet.js"></script>
+
+    
+    <script src="http://www.webglearth.com/v2/api.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.0.1/ol.css" />
+ 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh" crossorigin="anonymous"></script>
+   <script src="https://cdn-webgl.eegeo.com/eegeojs/early_access/latest/eegeo.js"></script>
+	<script src="https://cdn-geoweb.s3.amazonaws.com/esri-leaflet/0.0.1-beta.5/esri-leaflet.js"></script>
+<script src="https://cdn-geoweb.s3.amazonaws.com/esri-leaflet-geocoder/0.0.1-beta.5/esri-leaflet-geocoder.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn-geoweb.s3.amazonaws.com/esri-leaflet-geocoder/0.0.1-beta.5/esri-leaflet-geocoder.css">
+
+ <link rel="stylesheet" href="lib/leaflet/easy-button.css">
+<script src="lib/leaflet/easy-button.js"></script>
+ 
+
+<style>
+#wrapper {
+  margin: 0 auto;
+  width: 100%;
+
+  
+}
+
+#panel{
+ float: right;
+  width: 100%;
+  height:80%;
+background-color: #175B81;
+color:white;
+}
+
+#map {
+  float: right;
+  width: 80%;
+  height:600px;
+}
+#mapSearchContainer{
+  position:fixed;
+  top:20px;
+  right: 40px;
+  height:30px;
+  width:180px;
+  z-index:110;
+  font-size:10pt;
+  color:#5d5d5d;
+  border:solid 1px #bbb;
+  background-color:#f8f8f8;
+}
+.pointer{
+  position:absolute;
+  top:86px;
+  left:60px;
+  z-index:99999;
+}
+.sidebar {
+  float: left;
+  
+ text-align:center;
+  width: 20%;
+  height:600px;
+   background-color: #175B81;;
+   color: White;
+}
+
+#footer {
+float: left;
+background-color: #175B81;
+color: white;
+  width: 100%;
+  height:10px
+}
+
+.text-labels     {
+	font-weight: bold;
+    color:#006400;
+	font-family: "Arial Black"
+	font-size: 20px ;
+    line-height:25px;
+    text-align:center;
+   }
+   
+table, th, td 
+	{
+		margin:0px 5px;
+		/*border:solid 1px #333; */
+		
+		font:10px Verdana;
+	}
+th {
+		font-size:14px;
+		font-weight:bold
+	}
+td {
+		font-size:14px;
+		font-weight:normal
+	}
+tr {
+		background: white;
+		color:#175B81
+	}
+	
+tbody  tr:hover {
+		background: yellow;
+	}
+table {
+		border-collapse: collapse;
+	}  
+.table a
+{
+    display:block;
+    text-decoration:none;
+}
+#f1{
+	font-weight:bold
+}
+.p2 {
+    font-size: 24px;
+	font-weight:bold;
+    position: relative;
+    top: 11px;
+	left: 20px;
+	display:inline-block;
+}
+	#txtboxes{
+	font-weight:bold;
+	display:inline-block;
+	text-align: right;
+	margin: auto;
+    width: 95%;
+    padding: 10px;
+}
+
+.state-B,
+.state-A{
+  transition-duration: .5s;
+  transform: scaleY(0);
+  position: absolute;
+  display: block;
+  top: 0;
+  width: 100%;}
+
+.state-B{
+  transform-origin: 50% 0; }
+.state-A{
+  transform-origin: 50% 100%; }
+
+.state-B.B-active{
+  transform: scaleY(1); }
+
+.state-A.A-active{
+  transform: scaleY(1); }
+
+</style>
+</head>
+<body>
+
+<div id="wrapper">
+	
+	<div id="map">  </div>
+ <!-- style div with scrollbar if needed   -->
+	<div class="sidebar" style="overflow: scroll;">
+<p id= "title"style="text-align:center; font-size: 20px; color:white;background-color:#175B81; font-weight:italic; ">Search a location <br>and find it's<br><b> Weather details </b></p>	 <hr>
+<p id= "title_s"style="text-align:center; font-size: 18px; color:yellow; font-weight:bold; "></p>	 
+
+			<p id = 'mydata'> </p>
+			<table  id="myTable" style="width:90%; ">	</table>
+  </div>
+
+  <div id="footer">
+	
+	    </div>
+  
+</div>
+<script>
+var mylatlon;
+var myname;
+ window.toggle = false;
+	var table;
+	var row;
+	var cell1;
+	var cell2;
+	var map = L.map('map').setView([32.0, 73.26], 4); 
+	
+
+
+/*
+
+var animatedToggle = L.easyButton({
+  id: 'animated-marker-toggle',
+  type: 'animate',
+  states: [{
+    stateName: 'A',
+    icon: '<img src="img/3d.png"/>',
+    title: 'A',
+    onClick: function() {
+   map.removeLayer(googleStreets);
+ 
+   Esri_WorldGrayCanvas.addTo(map);  //3d infr
+        btn.state('A');
+  
+    }
+  }, {
+    stateName: 'B',
+    title: 'B',
+    icon: '<img src="img/d.png"/>',
+    onClick: function() {
+    
+    
+ map.removeLayer(Esri_WorldGrayCanvas);
+   
+	 googleStreets.addTo(map);
+    
+    btn.state('B');
+    }
+  }]
+});
+animatedToggle.addTo(map);
+   
+
+*/
+
+	
+
+L.easyButton('<img src="img/3d.png" style="width:120% ; height:100%">', function(btn){
+	
+  if(!toggle) {
+	  
+	  
+//	   map.eachLayer(function (layer) {
+  //      map.removeLayer(layer);
+    //});
+	  
+  // Esri_WorldGrayCanvas.addTo(map);  //3d infr
+  
+  
+  
+  
+  
+   map.eachLayer(function (layer) {
+        map.removeLayer(layer);
+    });
+  
+  
+  
+  
+  
+  
+  var earth = new WE.map('map');
+  var center = map.getCenter();
+       earth.setView([center['lat'], center['lng']], 4);
+
+    WE.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(earth);
+        
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   btn.button.style.backgroundColor = 'Green';
+   
+    
+    } else {
+
+ map.eachLayer(function (layer) {
+        map.removeLayer(layer);
+    });
+	 googleStreets.addTo(map);
+btn.button.style.backgroundColor = 'white';
+
+   
+   }
+  toggle = !toggle;
+    
+	
+              
+	
+	}).addTo(map);
+	
+	
+	
+	
+
+	/*
+
+var stateChangingButton = L.easyButton({
+    states: [{
+            stateName: '3D',        // name the state
+            icon:      'img/3d.png',               // and define its properties
+            title:     '3D',      // like its title
+            onClick: function(btn, map) {
+				       // and its callback
+			   map.setView([46.25,-121.8],10);
+                btn.state('3D');    // change state on click!
+            }
+        }, {
+            stateName: '2D',
+            icon:      'img/3d.png',
+            title:     '2D',
+            onClick: function(btn, map) {
+            map.setView([42.3748204,-71.1161913],16);
+                btn.state('2D');
+            }
+    }]
+});
+
+stateChangingButton.addTo(map);
+	
+
+	
+	*/
+	
+	
+	 var searchControl = new L.esri.Controls.Geosearch().addTo(map);
+	 
+
+  var results = new L.LayerGroup().addTo(map);
+
+ searchControl.on('results', function(data){
+    results.clearLayers();
+	
+	$("#myTable tr").remove(); 
+		
+	
+var count= data.results.length;
+	
+    for (var i = data.results.length - 1; i >= 0; i--) {
+
+  //  results.addLayer(L.marker(data.results[i].latlng));
+
+
+var key = '884c83ae14437b89922d6bc8a70c5af3';
+			
+			$.ajax({
+				url:'http://api.openweathermap.org/data/2.5/weather',
+				dataType:'json',
+				type:'GET',
+				data: {lat: data.results[i].latlng.lat , lon: data.results[i].latlng.lng , appid: key , units:'metric'},
+				
+				success: function(data){
+					var wf='';
+					var lati='';
+					var loni='';
+					$.each(data.weather, function(index, val){
+						var iconurl = "http://openweathermap.org/img/wn/" + val.icon + ".png";
+						lati +=data.coord.lat;
+						loni +=data.coord.lon;
+						wf +="<h2>"+  data.name  + 
+						"</h2><br><h3>"+val.description+ 
+						"</h3><img src="+ iconurl +" style='align:center'>"+ '<br>' +
+						data.main.temp +
+						 '&deg;C'+ '<br> pressure: ' +
+						
+						 data.main.pressure + ' <br>humidity: ' +
+						 data.main.humidity + '<br>min temp: ' +
+						 data.main.temp_min + ' <br>max temp: ' +
+						 data.main.temp_max + ' <br>Wind Speed: ' +
+						 data.wind.speed + ' <br>' 
+						 
+						 var gIcon = L.icon({
+    iconUrl: "http://openweathermap.org/img/wn/" + val.icon + ".png",  
+    iconSize:     [100, 150], // size of the icon
+});
+									var marker = L.marker([data.coord.lat, data.coord.lon], { icon: gIcon }).addTo(map).bindPopup('<strong>Weather Details of : </strong>'+wf+'');
+var table = document.getElementById("myTable");
+		 //Add the header row.
+		var row = table.insertRow(-1);
+        var headerCell = document.createElement("th");
+        headerCell.innerHTML = "<hr>Current Weather of<br><hr>";  //Fieldname
+        row.appendChild(headerCell);
+		
+		
+		$("#myTable").append("<tr><b>Coordintes:</b><td>"+lati+","+loni+","+wf+"</td></tr>");
+
+           
+						});
+                     //   $("#mydata").html(wf);
+                       // $("#title_s").html(data.name);
+	
+		
+
+
+
+
+		
+			
+		
+			//	var marker = L.marker([data.coord.lat, data.coord.lon], { Title: "I am here!!!" }).addTo(map);
+ 
+
+						
+					}
+				
+				});      
+      
+ 
+      
+      
+    }
+	
+$("body").on("click", "#myTable tr", function () {
+    
+
+	var co = $(this).text().split(','); 
+	
+map.setView([co[0], co[1]], 10);
+
+results.addLayer(L.marker([co[0], co[1]]).addTo(map).bindPopup('<strong>Weather Details of : </strong>'+co[2]+''));
+ 
+
+});
+
+  });
+
+
+	var osm=new L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',{ 
+				attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'});
+	
+	// https: also suppported.
+	var Esri_WorldImagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+		attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+	});
+	
+	// https: also suppported.
+	var Esri_WorldGrayCanvas = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+		attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+		maxZoom: 16
+	});
+	
+	
+	// https: also suppported.
+	var Stamen_TopOSMFeatures = L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toposm-features/{z}/{x}/{y}.{ext}', {
+		attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+		subdomains: 'abcd',
+		minZoom: 0,
+		maxZoom: 20,
+		ext: 'png',
+		bounds: [[22, -132], [51, -56]],
+		opacity: 0.9
+	});
+	
+	var OpenStreetMap_BlackAndWhite = L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+	maxZoom: 18,
+	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	});
+	//OpenStreetMap_BlackAndWhite.addTo(map);
+	
+	var blue = L.layerGroup([
+        Esri_WorldGrayCanvas,
+		Stamen_TopOSMFeatures
+		]); 
+//Streets
+
+var googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
+    maxZoom: 20,
+    subdomains:['mt0','mt1','mt2','mt3']
+}).addTo(map);
+
+//Hybrid
+var googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{
+    maxZoom: 20,
+    subdomains:['mt0','mt1','mt2','mt3']
+});
+
+//Satellite:
+
+ var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+    maxZoom: 20,
+    subdomains:['mt0','mt1','mt2','mt3']
+});
+
+//Terrain
+
+var googleTerrain = L.tileLayer('http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',{
+    maxZoom: 20,
+    subdomains:['mt0','mt1','mt2','mt3']
+});
+
+ 
+
+var baseMaps = {
+    "Google Streets":googleStreets,
+	"Google Satellite":googleSat,
+	"Google Hybrid":googleHybrid,
+	"Google Terrain":googleTerrain,
+	"Open Street Map": osm,
+    "Imagery":Esri_WorldImagery,
+	"Gray":Esri_WorldGrayCanvas,
+	"Blue Base":blue,
+	"OSM B&W":OpenStreetMap_BlackAndWhite,
+
+	
+};
+
+//Add layer control
+//L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+
+
+ </script>
+
+</body>
+</html>
